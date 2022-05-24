@@ -16,6 +16,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -36,6 +38,7 @@ import android.location.LocationListener;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -51,6 +54,9 @@ public class camera extends AppCompatActivity implements LocationListener{
     private static final int START_HANDLER_DELAY = 0;
 
     LocationManager locationManager;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,9 +104,20 @@ public class camera extends AppCompatActivity implements LocationListener{
     }
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        Log.d("mylog", "Got Location: " + location.getLatitude() + ", " + location.getLongitude());
-        Toast.makeText(camera.this, "Got Coordinates: " + location.getLatitude() + ", " + location.getLongitude(), Toast.LENGTH_SHORT).show();
-        locationManager.removeUpdates(this);
+        //Log.d("mylog", "Got Location: " + location.getLatitude() + ", " + location.getLongitude());
+        //Toast.makeText(camera.this, "Got Coordinates: " + location.getLatitude() + ", " + location.getLongitude(), Toast.LENGTH_SHORT).show();
+
+        List<Address> address = null;
+        Geocoder g = new Geocoder(this);
+        try {
+            address = g.getFromLocation(location.getLatitude(),location.getLongitude(),1);
+            text.setText(address.get(0).getAddressLine(0));
+            locationManager.removeUpdates(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //text.setText(String.format("latitude : %f \n longitude : %f",location.getLatitude(),location.getLongitude()));
+
     }
 
     private void requestLocation() {
