@@ -68,7 +68,6 @@ public class camera extends AppCompatActivity implements LocationListener{
     TextView text,id;
     Uri photoUri;
     String ID_name, file_dir,temp_file_dir,img_name;
-    //Arraylist<history> hist = new ArrayList<history>();
     Intent intent;
     String loc_address = null;
     LocationManager locationManager;
@@ -78,10 +77,9 @@ public class camera extends AppCompatActivity implements LocationListener{
     private static final String bucketName = "zappa-7lelfnbhz" ;
 
 
-    private static final int GPS_TIME_INTERVAL = 1000 * 60 * 5; // get gps location every 1 min
-    private static final int GPS_DISTANCE = 1000; // set the distance value in meter
-    private static final int HANDLER_DELAY = 1000 * 60 * 5;
-    private static final int START_HANDLER_DELAY = 0;
+    private static final int INTERVAL = 1000;
+    private static final int DIST = 1000;
+
 
 
 
@@ -91,10 +89,10 @@ public class camera extends AppCompatActivity implements LocationListener{
         setContentView(R.layout.activity_camera);
         intent = getIntent();
         ID_name = intent.getStringExtra("ID");
-        TedPermission.with(getApplicationContext())
+        TedPermission.with(getApplicationContext()) // Use TedPermission to permission
                 .setPermissionListener(permissionListener)
-                .setRationaleMessage("카메라 권한이 필요합니다.")
-                .setDeniedMessage("카메라 권한을 거부하셨습니다.")
+                .setRationaleMessage("Need Camera Permission")
+                .setDeniedMessage("Camera Permission Denied")
                 .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
                 .check();
         btnCamera = (Button) findViewById(R.id.camera_btn);
@@ -137,9 +135,9 @@ public class camera extends AppCompatActivity implements LocationListener{
                     handler.postDelayed(new Runnable() {
                         public void run() {
                             requestLocation();
-                            handler.postDelayed(this, HANDLER_DELAY);
+                            handler.postDelayed(this, 1000);
                         }
-                    }, START_HANDLER_DELAY);
+                    }, 0);
                     ////////////////////////////////////////
 
                     AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
@@ -151,15 +149,10 @@ public class camera extends AppCompatActivity implements LocationListener{
                     uploadObserver.setTransferListener(new TransferListener() {
                         @Override
                         public void onStateChanged(int id, TransferState state) {
-                            Log.d(TAG, "onStateChanged: " + id + ", " + state.toString());
-
                         }
 
                         @Override
                         public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
-                            float percentDonef = ((float) bytesCurrent / (float) bytesTotal) * 100;
-                            int percentDone = (int)percentDonef;
-                            Log.d(TAG, "ID:" + id + " bytesCurrent: " + bytesCurrent + " bytesTotal: " + bytesTotal + " " + percentDone + "%");
                         }
 
                         @Override
@@ -255,24 +248,6 @@ public class camera extends AppCompatActivity implements LocationListener{
 
 
     }
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        //Log.d("mylog", "Got Location: " + location.getLatitude() + ", " + location.getLongitude());
-        //Toast.makeText(camera.this, "Got Coordinates: " + location.getLatitude() + ", " + location.getLongitude(), Toast.LENGTH_SHORT).show();
-
-        List<Address> address = null;
-        Geocoder g = new Geocoder(this);
-        try {
-            address = g.getFromLocation(location.getLatitude(),location.getLongitude(),1);
-            loc_address = address.get(0).getAddressLine(0);
-            text.setText(loc_address);
-            locationManager.removeUpdates(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //text.setText(String.format("latitude : %f \n longitude : %f",location.getLatitude(),location.getLongitude()));
-
-    }
 
     private void requestLocation() {
         if (locationManager == null)
@@ -282,7 +257,7 @@ public class camera extends AppCompatActivity implements LocationListener{
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        GPS_TIME_INTERVAL, GPS_DISTANCE, this);
+                        INTERVAL, DIST, this);
             }
         }
     }
@@ -338,7 +313,19 @@ public class camera extends AppCompatActivity implements LocationListener{
     }
 
 
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        List<Address> address = null;
+        Geocoder g = new Geocoder(this);
+        try {
+            address = g.getFromLocation(location.getLatitude(),location.getLongitude(),1);
+            loc_address = address.get(0).getAddressLine(0);
+            text.setText(loc_address);
+            locationManager.removeUpdates(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-
+    }
 }
 
